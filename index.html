@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05070d">
+  <meta name="description" content="太阳系动态星图——可交互天体百科、实时轨道模拟与人类深空足迹。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b12'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23e6c58d'/%3E%3Cellipse cx='32' cy='32' rx='25' ry='10' fill='none' stroke='%23e6c58d' stroke-width='1.4' transform='rotate(-28 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='25' ry='10' fill='none' stroke='%23e6c58d' stroke-width='.7' transform='rotate(52 32 32)' opacity='.45'/%3E%3C/svg%3E">
+  <title>太阳系动态星图 · Helios Solar Atlas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Deep-space canvas layer -->
+    <div class="cosmos" aria-hidden="true">
+      <div class="nebula nebula-one"></div>
+      <div class="nebula nebula-two"></div>
+      <canvas id="orrery"></canvas>
+      <div class="star-shine"></div>
+      <div class="vignette"></div>
+      <div class="film-grain"></div>
+    </div>
+
+    <!-- Top navigation -->
+    <header class="topbar">
+      <a class="brand" href="#" id="brandHome" aria-label="返回太阳系全景">
+        <span class="brand-mark">
+          <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <circle cx="22" cy="22" r="4.5" fill="currentColor"/>
+            <ellipse cx="22" cy="22" rx="18" ry="8.2" stroke="currentColor" stroke-width="1.05" transform="rotate(-27 22 22)"/>
+            <ellipse cx="22" cy="22" rx="18" ry="8.2" stroke="currentColor" stroke-width="1.05" transform="rotate(51 22 22)" opacity=".46"/>
+            <circle cx="34.5" cy="8.6" r="1.8" fill="#f6d69d"/>
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <strong>HELIOS</strong>
+          <small>SOLAR ATLAS</small>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="星图功能">
+        <button class="nav-item is-active" type="button" data-nav="overview" aria-label="全景视图">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.2"/><ellipse cx="10" cy="10" rx="8" ry="3.6" transform="rotate(-25 10 10)"/><circle cx="16.4" cy="5.5" r="1.2" class="fill"/></svg>
+          <span>全景视图</span>
+        </button>
+        <button class="nav-item" type="button" data-nav="catalog" aria-label="天体分类" aria-controls="catalog" aria-expanded="true">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="5.5" height="5.5" rx="1"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1"/><rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1"/></svg>
+          <span>天体分类</span>
+        </button>
+        <button class="nav-item" type="button" data-nav="orbits" aria-label="轨道设置" aria-controls="orbitPopover" aria-expanded="false">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="10" rx="8.2" ry="4" transform="rotate(-28 10 10)"/><ellipse cx="10" cy="10" rx="4.2" ry="8.2" transform="rotate(-28 10 10)" opacity=".55"/><circle cx="10" cy="10" r="1.6" class="fill"/></svg>
+          <span>轨道设置</span>
+        </button>
+        <button class="nav-item" type="button" data-nav="time" aria-label="时间控制" aria-controls="timePopover" aria-expanded="false">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.3"/><path d="M10 5.7v4.7l3 1.8"/></svg>
+          <span>时间控制</span>
+        </button>
+        <button class="nav-item nav-deep" type="button" data-nav="deep" aria-label="深空足迹" aria-expanded="false">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10.4 2.4c2.9 1.6 4.4 4.3 4.4 7.7 0 2.1-.8 3.9-2.2 5.4l-2.2-2.1-2.1 2.1a7.3 7.3 0 0 1-2.3-5.4c0-3.4 1.5-6.1 4.4-7.7Z"/><circle cx="10.4" cy="8.2" r="1.45"/><path d="m8.2 13.4-1.8 2.8m5.5-2.8 1.8 2.8"/></svg>
+          <span>深空足迹</span>
+        </button>
+      </nav>
+
+      <div class="topbar-meta">
+        <div class="ephemeris-status">
+          <span class="live-dot"></span>
+          <div>
+            <span class="meta-label">LIVE EPHEMERIS · UTC+8</span>
+            <strong id="topClock">2026.10.18 <em>13:51</em></strong>
+          </div>
+        </div>
+        <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="打开天体目录">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h9"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Celestial catalogue -->
+    <aside class="catalog" id="catalog" aria-label="天体分类目录">
+      <div class="catalog-head">
+        <div>
+          <span class="kicker">CELESTIAL INDEX / 目录</span>
+          <h2>天体分类</h2>
+        </div>
+        <button class="panel-close" id="catalogClose" type="button" aria-label="收起天体目录">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 4.5-5 5.5 5 5.5"/></svg>
+        </button>
+      </div>
+
+      <label class="search-box" for="catalogSearch">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.7" cy="8.7" r="5.5"/><path d="m13 13 4 4"/></svg>
+        <input id="catalogSearch" type="search" placeholder="搜索天体、任务或英文名" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </label>
+
+      <div class="filter-chips" id="filterChips" aria-label="天体类型筛选">
+        <button type="button" class="is-active" data-filter="all">全部 <span>40</span></button>
+        <button type="button" data-filter="planet">行星 <span>8</span></button>
+        <button type="button" data-filter="moon">卫星 <span>10</span></button>
+        <button type="button" data-filter="ring">星环 <span>4</span></button>
+        <button type="button" data-filter="small">小天体 <span>6</span></button>
+        <button type="button" data-filter="human">人类 <span>11</span></button>
+      </div>
+
+      <div class="catalog-scroll" id="catalogScroll">
+        <div id="catalogList"></div>
+        <div class="catalog-empty" id="catalogEmpty" hidden>
+          <span>∅</span>
+          <p>未找到匹配的天体</p>
+          <button type="button" id="clearSearch">清除搜索</button>
+        </div>
+      </div>
+
+      <div class="catalog-foot">
+        <span><i class="status-dot"></i>星历同步中</span>
+        <span>40 份天体档案</span>
+      </div>
+    </aside>
+
+    <!-- Main star map stage -->
+    <main class="stage" id="stage">
+      <section class="hero" id="hero" aria-labelledby="heroTitle">
+        <div class="hero-eyebrow">
+          <span class="hairline"></span>
+          <span>INTERACTIVE CELESTIAL ATLAS</span>
+          <b>2026</b>
+        </div>
+        <h1 id="heroTitle">太阳系<span>动态星图</span></h1>
+        <p class="hero-sub">可交互天体百科 <i>・</i> 实时轨道模拟 <i>・</i> 点击查看全天体详情</p>
+        <p class="hero-note">完整呈现行星、卫星、星环、小天体与人类深空造物的运行轨迹。</p>
+        <div class="hero-stats" aria-label="星图数据概览">
+          <div><strong>08</strong><span>行星</span></div>
+          <div><strong>10</strong><span>卫星</span></div>
+          <div><strong>04</strong><span>星环系统</span></div>
+          <div><strong>11</strong><span>人类造物</span></div>
+        </div>
+        <div class="hero-coordinate"><span>ORBIT PLANE</span> ECLIPTIC J2000 · <span id="heroDist">1 AU = 149.6M KM</span></div>
+      </section>
+
+      <div class="map-tools" aria-label="视图工具">
+        <button type="button" id="zoomIn" title="放大星图" aria-label="放大星图">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+        </button>
+        <button type="button" id="zoomOut" title="缩小星图" aria-label="缩小星图">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12"/></svg>
+        </button>
+        <span class="tool-divider"></span>
+        <button type="button" id="resetViewTop" title="重置视角" aria-label="重置视角">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.3 7.2A6.5 6.5 0 1 1 3.7 12"/><path d="M4.3 3.8v3.8h3.8"/></svg>
+        </button>
+      </div>
+
+      <div class="orbit-axis" id="orbitAxis" aria-hidden="true">
+        <span class="axis-line"></span>
+        <span class="axis-label">ECLIPTIC · J2000</span>
+      </div>
+
+      <div class="hover-card" id="hoverCard" hidden>
+        <span class="hover-type"></span>
+        <strong class="hover-name"></strong>
+        <small class="hover-data"></small>
+      </div>
+
+      <div class="selection-badge" id="selectionBadge" hidden>
+        <span class="selection-dot"></span>
+        <div><small>已锁定天体</small><strong id="selectionName"></strong></div>
+        <button type="button" id="clearSelection" aria-label="取消选择">×</button>
+      </div>
+
+      <div class="deep-dock" id="deepDock" hidden>
+        <div class="deep-head">
+          <div>
+            <span class="kicker">HUMAN DEEP-SPACE TRAIL</span>
+            <h3>人类深空足迹</h3>
+          </div>
+          <p>轨迹经夸大了径向尺度，以便在一张星图中同时呈现数十年飞行。</p>
+          <button type="button" id="closeDeep" class="panel-close" aria-label="退出深空足迹">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+          </button>
+        </div>
+        <div class="mission-track" id="missionTrack"></div>
+      </div>
+
+      <div class="map-bottom">
+        <div class="interaction-hint" id="interactionHint">
+          <span class="mouse-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.7" width="11" height="18.6" rx="5.5"/><path d="M12 6.2v3.4"/></svg>
+          </span>
+          <span>拖拽旋转视角</span><i>・</i><span>滚轮缩放星图</span><i>・</i><span>点击任意天体查看详情</span>
+        </div>
+        <div class="quick-controls">
+          <button type="button" id="quickOrbit" class="is-active" aria-pressed="true">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="10" rx="7.5" ry="3.7" transform="rotate(-25 10 10)"/><circle cx="10" cy="10" r="1.6" class="fill"/></svg>
+            <span>显示轨道线</span>
+          </button>
+          <button type="button" id="quickPause" aria-pressed="false">
+            <svg class="pause-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5.5v9M13 5.5v9"/></svg>
+            <svg class="play-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 5.5 7 4.5-7 4.5z"/></svg>
+            <span>暂停模拟</span>
+          </button>
+          <button type="button" id="quickReset">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.3 7.2A6.5 6.5 0 1 1 3.7 12"/><path d="M4.3 3.8v3.8h3.8"/></svg>
+            <span>重置视角</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="scale-indicator" aria-hidden="true">
+        <span>DISTANCE</span>
+        <i></i>
+        <b>LOG SCALE</b>
+      </div>
+    </main>
+
+    <!-- Unified detail panel -->
+    <aside class="detail-panel" id="detailPanel" aria-hidden="true" aria-label="天体详情">
+      <div class="detail-progress"><span></span></div>
+      <div class="detail-scroll" id="detailScroll">
+        <div id="detailContent"></div>
+      </div>
+      <div class="detail-actions">
+        <button type="button" class="primary-action" id="locateObject">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5"/><path d="M10 1.8v3M10 15.2v3M1.8 10h3M15.2 10h3"/></svg>
+          在星图中定位
+        </button>
+        <button type="button" class="secondary-action" id="closeDetail">返回星图</button>
+      </div>
+    </aside>
+
+    <!-- Orbit settings popover -->
+    <div class="control-popover" id="orbitPopover" data-popover hidden role="dialog" aria-label="轨道设置">
+      <div class="popover-head">
+        <div><span class="kicker">ORBITAL LAYERS</span><h3>轨道设置</h3></div>
+        <button class="panel-close popover-close" type="button" aria-label="关闭轨道设置">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+        </button>
+      </div>
+      <div class="switch-list">
+        <label class="switch-row">
+          <span class="switch-copy"><b>轨道线</b><small>显示全部天体的运行轨道</small></span>
+          <input type="checkbox" id="setOrbits" checked><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>轨道参数</b><small>标注半长轴与离心率</small></span>
+          <input type="checkbox" id="setParams"><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>天体标签</b><small>显示中文名与英文名</small></span>
+          <input type="checkbox" id="setLabels" checked><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>运行拖尾</b><small>沿轨道绘制近期运动轨迹</small></span>
+          <input type="checkbox" id="setTrails" checked><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>小行星带</b><small>主带 2.1–3.3 AU 尘埃粒子</small></span>
+          <input type="checkbox" id="setBelt" checked><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>人类造物</b><small>空间站、望远镜与深空探测器</small></span>
+          <input type="checkbox" id="setHuman" checked><span class="switch-ui"></span>
+        </label>
+        <label class="switch-row">
+          <span class="switch-copy"><b>星环系统</b><small>土星、天王星、木星与海王星环</small></span>
+          <input type="checkbox" id="setRings" checked><span class="switch-ui"></span>
+        </label>
+      </div>
+      <div class="popover-foot">
+        <span>图层独立渲染 · 支持点击交互</span>
+        <button type="button" id="resetLayers">恢复默认</button>
+      </div>
+    </div>
+
+    <!-- Time controls popover -->
+    <div class="control-popover time-popover" id="timePopover" data-popover hidden role="dialog" aria-label="时间控制">
+      <div class="popover-head">
+        <div><span class="kicker">TEMPORAL CONTROL</span><h3>时间控制</h3></div>
+        <button class="panel-close popover-close" type="button" aria-label="关闭时间控制">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+        </button>
+      </div>
+      <div class="time-readout">
+        <span>SIMULATION DATE</span>
+        <strong id="popoverDate">2026.10.18</strong>
+        <em id="popoverTime">13:51:09 <i>CST</i></em>
+      </div>
+      <div class="speed-block">
+        <div class="speed-head"><span>模拟速率</span><strong id="speedLabel">1×</strong></div>
+        <input type="range" id="speedRange" min="0" max="5" value="1" step="1" aria-label="模拟速率">
+        <div class="speed-ticks"><span>0.25×</span><span>1×</span><span>5×</span><span>25×</span><span>100×</span><span>365×</span></div>
+        <p class="speed-note" id="speedNote">1 秒 ≈ 12 天</p>
+      </div>
+      <div class="time-actions">
+        <button type="button" class="time-main" id="popoverPause">
+          <svg class="pause-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5.5v9M13 5.5v9"/></svg>
+          <svg class="play-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 5.5 7 4.5-7 4.5z"/></svg>
+          <span>暂停模拟</span>
+        </button>
+        <button type="button" id="stepDay">前进一日</button>
+        <button type="button" id="resetNow">回到此刻</button>
+      </div>
+      <div class="time-quote">“行星不会等待观测者，但星图可以。”</div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <span class="footer-mark"><i class="status-dot"></i> KEPLERIAN MODEL · v2.6</span>
+      <p>本星图基于天体力学模型实时模拟，轨道位置与运行规律符合真实天文参数；所有天体支持点击交互，可独立查看轨道线与详细数据。</p>
+      <span class="footer-meta">JPL EPHEMERIS · 40 OBJECTS</span>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
